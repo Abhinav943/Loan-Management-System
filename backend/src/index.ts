@@ -7,6 +7,7 @@ import { errorHandler } from "./middlewares/errorMiddleware";
 
 import authRoutes from "./routes/authRoutes"; 
 import borrowerRoutes from "./routes/borrowerRoutes";
+import dashboardRoutes from "./routes/dashboardRoutes";
 
 dotenv.config();
 connectDB();
@@ -24,6 +25,7 @@ app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/borrower", borrowerRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 app.get("/", (req, res) => {
   res.send("LMS API is running...");

@@ -7,11 +7,12 @@ export enum EmploymentMode {
 }
 
 export enum LoanStatus {
-  Pending = "Pending", 
-  Sanctioned = "Sanctioned", 
-  Rejected = "Rejected", 
-  Disbursed = "Disbursed", 
-  Closed = "Closed", 
+  Pending = "Pending",
+  Verified = "Verified",
+  Sanctioned = "Sanctioned",
+  Disbursed = "Disbursed",
+  Rejected = "Rejected",
+  Closed = "Closed",
 }
 
 export interface ILoan extends Document {
