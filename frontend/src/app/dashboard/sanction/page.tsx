@@ -23,7 +23,11 @@ const formatDate = (dateString: string) => {
 
 const getSafeDownloadUrl = (originalUrl: string) => {
   if (!originalUrl) return "#";
-  return originalUrl.replace("/upload/", "/upload/fl_attachment/");
+  if (originalUrl.toLowerCase().endsWith(".pdf")) {
+    return originalUrl.slice(0, -4) + ".png";
+  }
+  
+  return originalUrl;
 };
 
 const getAge = (dobString: string): number => {

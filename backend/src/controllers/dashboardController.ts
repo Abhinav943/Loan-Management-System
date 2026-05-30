@@ -62,9 +62,19 @@ export const getVerifiedLoans = asyncHandler(
       "borrowerId",
       "fullName email"
     );
+
+    const decryptedLoans = loans.map((loan) => {
+      const loanObj = loan.toObject(); 
+      if (loanObj.pan) {
+        loanObj.pan = decryptData(loanObj.pan);
+      }
+
+      return loanObj;
+    });
+
     res
       .status(200)
-      .json(new ApiResponse(200, loans, "Verified loans retrieved"));
+      .json(new ApiResponse(200, decryptedLoans, "Verified loans retrieved"));
   }
 );
 
