@@ -229,14 +229,13 @@ export default function BorrowerPortal() {
 
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col">
-        {/* Navigation Topbar */}
         <header className="border-b border-slate-900 bg-slate-900/40 py-4 px-6 backdrop-blur-md">
           <div className="mx-auto max-w-5xl flex items-center justify-between">
             <div className="flex items-center gap-3 text-slate-100 font-bold">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-tr from-emerald-500 to-indigo-600 text-white shadow-md shadow-emerald-500/20">
                 <Landmark className="h-4 w-4" />
               </div>
-              <span>Antigravity LMS</span>
+              <span>LMS</span>
             </div>
             <div className="flex items-center gap-4">
               <span className="rounded-lg bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-400 border border-emerald-500/20">
@@ -354,7 +353,7 @@ export default function BorrowerPortal() {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-tr from-emerald-500 to-indigo-600 text-white shadow-md shadow-emerald-500/20">
               <Landmark className="h-4 w-4" />
             </div>
-            <span>Antigravity LMS</span>
+            <span>LMS</span>
           </div>
           <div className="flex items-center gap-4">
             <span className="rounded-lg bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-400 border border-emerald-500/20">

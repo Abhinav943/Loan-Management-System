@@ -98,7 +98,7 @@ export default function Login() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-tr from-emerald-500 to-indigo-600 text-white shadow-lg shadow-emerald-500/20">
             <Landmark className="h-5 w-5" />
           </div>
-          <span>Antigravity LMS</span>
+          <span>LMS</span>
         </div>
         <div className="relative my-auto space-y-6 max-w-lg">
           <h1 className="text-4xl font-extrabold tracking-tight text-white leading-tight">The Intelligent Loan Management Suite.</h1>
@@ -107,7 +107,7 @@ export default function Login() {
           </p>
         </div>
         <div className="relative text-slate-500 text-sm flex gap-4">
-          <span>&copy; 2026 Antigravity Financial Systems</span>
+          <span>&copy; 2026 Financial Systems</span>
           <span>&bull;</span>
           <span>Version 1.2.0</span>
         </div>

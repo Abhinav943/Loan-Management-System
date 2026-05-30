@@ -5,6 +5,7 @@ import asyncHandler from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
 import { ApiResponse } from "../utils/ApiResponse";
 import { AuthRequest } from "../middlewares/authMiddleware";
+import { decryptData } from "../utils/encryption";
 
 export const getPendingLoans = asyncHandler(
   async (req: AuthRequest, res: Response) => {
@@ -12,9 +13,16 @@ export const getPendingLoans = asyncHandler(
       "borrowerId",
       "fullName email"
     );
+
+    const decryptedLoans = loans.map((loan) => {
+      const loanObj = loan.toObject();
+      loanObj.pan = decryptData(loanObj.pan);
+      return loanObj;
+    });
+
     res
       .status(200)
-      .json(new ApiResponse(200, loans, "Pending loans retrieved"));
+      .json(new ApiResponse(200, decryptedLoans, "Pending loans retrieved"));
   }
 );
 

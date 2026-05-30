@@ -5,6 +5,7 @@ import { ApiError } from "../utils/ApiError";
 import { ApiResponse } from "../utils/ApiResponse";
 import { AuthRequest } from "../middlewares/authMiddleware";
 import { uploadOnCloudinary } from "../utils/cloudinary";
+import { encryptData } from "../utils/encryption";
 
 const calculateAge = (dob: string | Date): number => {
   const diffMs = Date.now() - new Date(dob).getTime();
@@ -91,13 +92,16 @@ export const applyForLoan = asyncHandler(
     }
 
 
+   const numLoanAmount = Number(loanAmount);
+    const numTenure = Number(tenure);
+
     const interestRate = 12; 
-    const simpleInterest = (loanAmount * interestRate * tenure) / (365 * 100);
-    const totalRepayment = Math.round(loanAmount + simpleInterest); 
+    const simpleInterest = (numLoanAmount * interestRate * numTenure) / (365 * 100);
+    const totalRepayment = Math.round(numLoanAmount + simpleInterest);
 
     const newLoan = await Loan.create({
       borrowerId: req.user?._id,
-      pan,
+      pan: encryptData(pan),
       dob,
       monthlySalary,
       employmentMode,

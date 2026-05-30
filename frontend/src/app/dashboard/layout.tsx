@@ -63,7 +63,7 @@ export default function DashboardLayout({
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-tr from-emerald-500 to-indigo-600 text-white shadow-md shadow-emerald-500/20">
             <Landmark className="h-4 w-4" />
           </div>
-          <span className="font-bold text-slate-100">Antigravity LMS</span>
+          <span className="font-bold text-slate-100">LMS</span>
         </div>
 
         <div className="px-6 py-5 border-b border-slate-900/50 flex items-center gap-3">
@@ -124,7 +124,7 @@ export default function DashboardLayout({
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-tr from-emerald-500 to-indigo-600 text-white">
                 <Landmark className="h-4 w-4" />
               </div>
-              <span className="font-bold text-slate-100">Antigravity LMS</span>
+              <span className="font-bold text-slate-100">LMS</span>
             </div>
 
             <nav className="flex-1 space-y-1">
@@ -170,7 +170,7 @@ export default function DashboardLayout({
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-tr from-emerald-500 to-indigo-600 text-white">
               <Landmark className="h-4 w-4" />
             </div>
-            <span className="font-bold text-slate-200 text-sm">Antigravity LMS</span>
+            <span className="font-bold text-slate-200 text-sm">LMS</span>
           </div>
 
           <button

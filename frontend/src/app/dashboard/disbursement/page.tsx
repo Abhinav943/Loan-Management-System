@@ -103,7 +103,6 @@ export default function DisbursementPanel() {
               <tbody className="divide-y divide-slate-900/50 text-slate-300">
                 {loans.map((loan) => (
                   <tr key={loan._id} className="hover:bg-slate-900/20 transition-colors">
-                    {/* User */}
                     <td className="px-6 py-4">
                       <div className="font-semibold text-slate-200">
                         {loan.borrowerId?.fullName || "Sanctioned Borrower"}
