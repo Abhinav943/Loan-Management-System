@@ -21,7 +21,7 @@ export const getPendingLoans = asyncHandler(
 export const verifyLoan = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     const { loanId } = req.params;
-    const { status } = req.body;
+    const { status, rejectionReason } = req.body;
 
     if (![LoanStatus.Verified, LoanStatus.Rejected].includes(status)) {
       throw new ApiError(400, "Invalid status. Must be Verified or Rejected");
@@ -34,6 +34,9 @@ export const verifyLoan = asyncHandler(
     if (!loan) throw new ApiError(404, "Pending loan not found");
 
     loan.status = status;
+    if (status === LoanStatus.Rejected && rejectionReason) {
+      loan.rejectionReason = rejectionReason;
+    }
     await loan.save();
 
     res
@@ -60,7 +63,7 @@ export const getVerifiedLoans = asyncHandler(
 export const sanctionLoan = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     const { loanId } = req.params;
-    const { status } = req.body;
+    const { status, rejectionReason } = req.body;
 
     if (![LoanStatus.Sanctioned, LoanStatus.Rejected].includes(status)) {
       throw new ApiError(400, "Invalid status. Must be Sanctioned or Rejected");
@@ -73,6 +76,9 @@ export const sanctionLoan = asyncHandler(
     if (!loan) throw new ApiError(404, "Verified loan not found");
 
     loan.status = status;
+    if (status === LoanStatus.Rejected && rejectionReason) {
+      loan.rejectionReason = rejectionReason;
+    }
     await loan.save();
 
     res
@@ -122,16 +128,30 @@ export const getDisbursedLoans = asyncHandler(
       "borrowerId",
       "fullName email"
     );
+    
+    const loansWithPayments = await Promise.all(
+      loans.map(async (loan) => {
+        const payments = await Payment.find({ loanId: loan._id });
+        const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+        return {
+          ...loan.toObject(),
+          totalPaid,
+          remainingBalance: Math.max(0, loan.totalRepayment - totalPaid),
+          payments,
+        };
+      })
+    );
+
     res
       .status(200)
-      .json(new ApiResponse(200, loans, "Active disbursed loans retrieved"));
+      .json(new ApiResponse(200, loansWithPayments, "Active disbursed loans retrieved"));
   }
 );
 
 export const recordPayment = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     const { loanId } = req.params;
-    const { utrNumber, amount } = req.body;
+    const { utrNumber, amount, paymentDate } = req.body;
 
     if (!utrNumber || !amount || amount <= 0) {
       throw new ApiError(400, "Valid UTR number and amount are required");
@@ -155,6 +175,7 @@ export const recordPayment = asyncHandler(
       loanId: loan._id,
       utrNumber,
       amount,
+      paymentDate: paymentDate ? new Date(paymentDate) : new Date(),
       recordedBy: req.user?._id,
     });
 
