@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
-// Helper to calculate age from DOB
 const getAge = (dobString: string): number => {
   if (!dobString) return 0;
   const today = new Date();
@@ -53,15 +52,10 @@ const formatINR = (num: number) => {
 export default function BorrowerPortal() {
   const { user, logout } = useAuth();
 
-
-  // Active Loan Application State
   const [activeLoan, setActiveLoan] = useState<Loan | null>(null);
   const [loadingActiveLoan, setLoadingActiveLoan] = useState(true);
 
-  // Wizard States
-  const [step, setStep] = useState(2); // Start at Step 2 directly since Step 1 (Auth) is implicitly passed
-  
-  // Step 2 Form States (Details & Eligibility)
+  const [step, setStep] = useState(2); 
   const [fullName, setFullName] = useState(user?.fullName || "");
   const [pan, setPan] = useState("");
   const [dob, setDob] = useState("");
@@ -70,29 +64,25 @@ export default function BorrowerPortal() {
   const [breErrors, setBreErrors] = useState<string[]>([]);
   const [isBrePassed, setIsBrePassed] = useState(false);
 
-  // Step 3 File States (Upload)
   const [salarySlipFile, setSalarySlipFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Step 4 Loan Config States
   const [loanAmount, setLoanAmount] = useState(100000);
   const [tenure, setTenure] = useState(180);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch active loan on load
   const fetchMyLoans = async () => {
     try {
       const response = await api.get("/api/borrower/my-loans");
       const loans: Loan[] = response.data?.data || [];
-      // Look for active loan (not rejected, not closed)
       const active = loans.find((l: Loan) => 
         ["Pending", "Verified", "Sanctioned", "Disbursed"].includes(l.status)
       );
-      // Fallback: If no active but there is a rejected one that is very recent, let's keep it for feedback
+   
       if (active) {
         setActiveLoan(active);
       } else if (loans.length > 0) {
-        setActiveLoan(loans[0]); // Show latest closed/rejected
+        setActiveLoan(loans[0]); 
       }
     } catch (e: unknown) {
       console.error("Failed to load loans", e);
@@ -109,18 +99,16 @@ export default function BorrowerPortal() {
     loadLoans();
   }, []);
 
-  // Run BRE validation automatically when form values change
+
   useEffect(() => {
-    // Compute validation errors
+
     const errors: string[] = [];
 
-    // PAN check
     const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
     if (pan && !panRegex.test(pan.toUpperCase())) {
       errors.push("PAN must match valid format (e.g. ABCDE1234F).");
     }
 
-    // Age check
     if (dob) {
       const age = getAge(dob);
       if (age < 23 || age > 50) {
@@ -128,17 +116,14 @@ export default function BorrowerPortal() {
       }
     }
 
-    // Salary check
     if (monthlySalary !== "" && monthlySalary < 25000) {
       errors.push("Monthly salary must be at least ₹25,000.");
     }
 
-    // Employment Mode check
     if (employmentMode === "Unemployed") {
       errors.push("Unemployed applicants are ineligible for credit.");
     }
 
-    // Schedule state updates after the effect completes to avoid cascading renders
     setTimeout(() => {
       setBreErrors(errors);
       const isFilled = pan && dob && monthlySalary && employmentMode;
@@ -146,7 +131,6 @@ export default function BorrowerPortal() {
     }, 0);
   }, [pan, dob, monthlySalary, employmentMode, step]);
 
-  // Step 3 File handlers
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -186,8 +170,8 @@ export default function BorrowerPortal() {
     }
   };
 
-  // Step 4 calculations
-  const interestRate = 12; // 12% p.a.
+
+  const interestRate = 12; 
   const simpleInterest = (loanAmount * interestRate * tenure) / (365 * 100);
   const totalRepayment = Math.round(loanAmount + simpleInterest);
   const dailyRepayment = totalRepayment / tenure;
@@ -219,7 +203,7 @@ export default function BorrowerPortal() {
       toast.success("Application Submitted Successfully!", { id: loadToast });
       setActiveLoan(response.data?.data);
     } catch (err: unknown) {
-      // Treat err as an unknown error possibly from the API
+
       const error = err as { response?: { data?: { message?: string; errors?: string[] } } };
       const errMsg = error.response?.data?.message || "Failed to submit application.";
       const errDetails = error.response?.data?.errors;
@@ -233,7 +217,6 @@ export default function BorrowerPortal() {
     }
   };
 
-  // Render Status Tracker Screen
   if (!loadingActiveLoan && activeLoan && ["Pending", "Verified", "Sanctioned", "Disbursed"].includes(activeLoan.status)) {
     const statusMap: Record<string, { label: string; desc: string; step: number }> = {
       Pending: { label: "Applied", desc: "Your application is waiting for Sales Verification.", step: 1 },
@@ -250,7 +233,7 @@ export default function BorrowerPortal() {
         <header className="border-b border-slate-900 bg-slate-900/40 py-4 px-6 backdrop-blur-md">
           <div className="mx-auto max-w-5xl flex items-center justify-between">
             <div className="flex items-center gap-3 text-slate-100 font-bold">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-emerald-500 to-indigo-600 text-white shadow-md shadow-emerald-500/20">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-tr from-emerald-500 to-indigo-600 text-white shadow-md shadow-emerald-500/20">
                 <Landmark className="h-4 w-4" />
               </div>
               <span>Antigravity LMS</span>
@@ -270,7 +253,6 @@ export default function BorrowerPortal() {
           </div>
         </header>
 
-        {/* Content */}
         <main className="flex-1 max-w-3xl mx-auto w-full py-12 px-6 flex flex-col justify-center">
           <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-8 shadow-2xl backdrop-blur-xl">
             <div className="text-center space-y-3 mb-10">
@@ -283,7 +265,7 @@ export default function BorrowerPortal() {
               </p>
             </div>
 
-            {/* Stepper Status Bar */}
+
             <div className="relative mb-12">
               <div className="absolute top-1/2 left-0 h-0.5 w-full -translate-y-1/2 bg-slate-850"></div>
               <div
@@ -324,7 +306,6 @@ export default function BorrowerPortal() {
               </div>
             </div>
 
-            {/* Loan Specs Card */}
             <div className="rounded-xl bg-slate-950 p-6 border border-slate-900 space-y-4">
               <div className="flex justify-between items-center pb-3 border-b border-slate-900 text-sm font-semibold">
                 <span className="text-slate-400">Application Reference</span>
@@ -362,17 +343,15 @@ export default function BorrowerPortal() {
     );
   }
 
-  // Render Rejected / Closed Status (allow starting a new application)
   const isRejected = activeLoan?.status === "Rejected";
   const isClosed = activeLoan?.status === "Closed";
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col">
-      {/* Header */}
       <header className="border-b border-slate-900 bg-slate-900/40 py-4 px-6 backdrop-blur-md">
         <div className="mx-auto max-w-5xl flex items-center justify-between">
           <div className="flex items-center gap-3 text-slate-100 font-bold">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-emerald-500 to-indigo-600 text-white shadow-md shadow-emerald-500/20">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-tr from-emerald-500 to-indigo-600 text-white shadow-md shadow-emerald-500/20">
               <Landmark className="h-4 w-4" />
             </div>
             <span>Antigravity LMS</span>
@@ -392,9 +371,9 @@ export default function BorrowerPortal() {
         </div>
       </header>
 
-      {/* Main Wizard Form */}
+
       <main className="flex-1 max-w-3xl mx-auto w-full py-12 px-6 flex flex-col justify-center">
-        {/* Rejected or Closed Alert Banner */}
+
         {isRejected && (
           <div className="mb-6 flex items-start gap-3 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-300">
             <XCircle className="h-5 w-5 shrink-0 text-rose-400" />
@@ -433,7 +412,7 @@ export default function BorrowerPortal() {
 
         {(!activeLoan || (!isRejected && !isClosed)) && (
           <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-8 shadow-2xl backdrop-blur-xl">
-            {/* Step indicator */}
+
             <div className="flex justify-between items-center mb-8 pb-5 border-b border-slate-850">
               <div>
                 <span className="text-xs font-semibold text-emerald-500 uppercase tracking-widest">
@@ -457,10 +436,9 @@ export default function BorrowerPortal() {
               </div>
             </div>
 
-            {/* Step 2: Personal Details & BRE */}
             {step === 2 && (
               <div className="space-y-6">
-                {/* BRE Error Banner */}
+
                 {breErrors.length > 0 && (
                   <div className="flex items-start gap-3 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-xs text-rose-300">
                     <AlertTriangle className="h-5 w-5 shrink-0 text-rose-400" />
@@ -555,7 +533,7 @@ export default function BorrowerPortal() {
                   <button
                     onClick={() => setStep(3)}
                     disabled={!isBrePassed}
-                    className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:brightness-110 disabled:opacity-40 disabled:pointer-events-none"
+                    className="flex items-center gap-1.5 rounded-xl bg-linear-to-r from-emerald-500 to-teal-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:brightness-110 disabled:opacity-40 disabled:pointer-events-none"
                   >
                     Proceed to Documents
                     <ArrowRight className="h-4 w-4" />
@@ -564,14 +542,12 @@ export default function BorrowerPortal() {
               </div>
             )}
 
-            {/* Step 3: Salary Slip Upload */}
             {step === 3 && (
               <div className="space-y-6">
                 <p className="text-slate-400 text-xs leading-relaxed">
                   Please upload your recent official salary slip. Files must be in PDF, JPG, or PNG format and cannot exceed 5MB in size.
                 </p>
 
-                {/* Drag and Drop Zone */}
                 {!salarySlipFile ? (
                   <div
                     onDragOver={handleDragOver}
@@ -634,7 +610,7 @@ export default function BorrowerPortal() {
                   <button
                     onClick={() => setStep(4)}
                     disabled={!salarySlipFile}
-                    className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:brightness-110 disabled:opacity-40 disabled:pointer-events-none"
+                    className="flex items-center gap-1.5 rounded-xl bg-linear-to-r from-emerald-500 to-teal-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:brightness-110 disabled:opacity-40 disabled:pointer-events-none"
                   >
                     Configure Term
                     <ArrowRight className="h-4 w-4" />
@@ -643,13 +619,10 @@ export default function BorrowerPortal() {
               </div>
             )}
 
-            {/* Step 4: Loan Config & Apply */}
             {step === 4 && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                  {/* Sliders Area */}
                   <div className="md:col-span-3 space-y-6">
-                    {/* Amount Slider */}
                     <div className="space-y-3">
                       <div className="flex justify-between items-center text-sm">
                         <span className="text-slate-400 font-medium">Loan Amount Required</span>
@@ -670,7 +643,6 @@ export default function BorrowerPortal() {
                       </div>
                     </div>
 
-                    {/* Tenure Slider */}
                     <div className="space-y-3">
                       <div className="flex justify-between items-center text-sm">
                         <span className="text-slate-400 font-medium">Credit Tenure (Days)</span>
@@ -692,7 +664,6 @@ export default function BorrowerPortal() {
                     </div>
                   </div>
 
-                  {/* Glassmorphic Summary Preview Card */}
                   <div className="md:col-span-2 rounded-2xl border border-emerald-500/10 bg-emerald-500/5 p-5 backdrop-blur-md space-y-4">
                     <div className="flex items-center gap-2 pb-3 border-b border-emerald-500/10">
                       <Sliders className="h-5 w-5 text-emerald-400" />
@@ -732,7 +703,7 @@ export default function BorrowerPortal() {
                   <button
                     onClick={handleSubmitApplication}
                     disabled={isSubmitting}
-                    className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:brightness-110 active:scale-98 disabled:opacity-40"
+                    className="flex items-center gap-1.5 rounded-xl bg-linear-to-r from-emerald-500 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:brightness-110 active:scale-98 disabled:opacity-40"
                   >
                     {isSubmitting ? "Submitting Application..." : "Submit & Apply"}
                     <CheckCircle className="h-4 w-4" />

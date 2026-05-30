@@ -91,12 +91,11 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row bg-slate-950">
-      {/* Branding Section */}
       <div className="relative hidden lg:flex w-1/2 flex-col justify-between bg-slate-900 p-12 overflow-hidden border-r border-slate-800">
         <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-emerald-500/10 blur-3xl"></div>
         <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-indigo-500/5 blur-3xl"></div>
         <div className="relative flex items-center gap-3 text-slate-100 font-bold text-xl">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-emerald-500 to-indigo-600 text-white shadow-lg shadow-emerald-500/20">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-tr from-emerald-500 to-indigo-600 text-white shadow-lg shadow-emerald-500/20">
             <Landmark className="h-5 w-5" />
           </div>
           <span>Antigravity LMS</span>
@@ -114,7 +113,6 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Forms Section */}
       <div className="flex w-full lg:w-1/2 items-center justify-center p-8 sm:p-12 md:p-16">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center lg:text-left">
@@ -153,7 +151,7 @@ export default function Login() {
               </div>
             </div>
             <button type="submit" disabled={submitting}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 py-3 px-4 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:brightness-110 active:scale-98 disabled:opacity-50 disabled:pointer-events-none">
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-emerald-500 to-teal-600 py-3 px-4 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:brightness-110 active:scale-98 disabled:opacity-50 disabled:pointer-events-none">
               {isLogin ? "Sign In" : "Register"}
               <ArrowRight className="h-4 w-4" />
             </button>

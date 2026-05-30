@@ -11,12 +11,12 @@ export default function Unauthorized() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
       <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-rose-500/20 bg-slate-900/60 p-8 text-center backdrop-blur-xl shadow-2xl shadow-rose-950/25">
-        {/* Glow effect */}
+
         <div className="absolute -top-24 -left-24 h-48 w-48 rounded-full bg-rose-500/10 blur-3xl"></div>
         <div className="absolute -bottom-24 -right-24 h-48 w-48 rounded-full bg-rose-500/5 blur-3xl"></div>
 
         <div className="relative">
-          {/* Lock Icon */}
+
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-500 shadow-inner">
             <ShieldAlert className="h-8 w-8" />
           </div>

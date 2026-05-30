@@ -21,7 +21,6 @@ export const setAccessToken = (token: string | null) => {
 
 export const getAccessToken = () => accessToken;
 
-// Register callbacks for token updates so React state stays synced
 export const subscribeTokenRefresh = (cb: (token: string) => void) => {
   refreshSubscribers.push(cb);
   return () => {
@@ -33,12 +32,10 @@ const onRefreshed = (token: string) => {
   refreshSubscribers.forEach((cb) => cb(token));
 };
 
-// Register callback for when authentication completely fails (e.g. invalid refresh cookie)
 export const registerOnLogout = (cb: () => void) => {
   onLogoutCallback = cb;
 };
 
-// Request Interceptor: Inject bearer token if available
 api.interceptors.request.use(
   (config) => {
     if (accessToken && !config.headers.Authorization) {
@@ -49,15 +46,12 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Handle 401 Unauthorized errors automatically
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // Check if error is 401 Unauthorized and we haven't already retried this request
     if (error.response?.status === 401 && !originalRequest._retry) {
-      // If we are already refreshing, queue this request to resolve once refreshed
       if (isRefreshing) {
         return new Promise((resolve) => {
           subscribeTokenRefresh((token) => {
@@ -71,7 +65,6 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Fetch new token using root axios directly to avoid interceptor loop
         const response = await axios.post(
           `${API_URL}/api/auth/refresh`,
           {},
@@ -88,7 +81,6 @@ api.interceptors.response.use(
         onRefreshed(newAccessToken);
         isRefreshing = false;
 
-        // Replay original request
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return api(originalRequest);
       } catch (refreshError) {

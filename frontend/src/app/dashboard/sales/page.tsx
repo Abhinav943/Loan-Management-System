@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { api } from "@/services/api";
-import { Users, FileCheck, Ban, CheckCircle, Search, Calendar, FileText } from "lucide-react";
+import { Users, FileCheck, Ban, Search, Calendar } from "lucide-react";
 import toast from "react-hot-toast";
+import type { Loan } from "@/types";
 
-// Currency Formatter
 const formatINR = (num: number) => {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -14,7 +14,7 @@ const formatINR = (num: number) => {
   }).format(num);
 };
 
-// Date Formatter
+
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString("en-IN", {
     year: "numeric",
@@ -24,28 +24,30 @@ const formatDate = (dateString: string) => {
 };
 
 export default function SalesPanel() {
-  const [loans, setLoans] = useState<any[]>([]);
+  const [loans, setLoans] = useState<Loan[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   
-  // Rejection Dialog State
   const [rejectingLoanId, setRejectingLoanId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
 
   const fetchLeads = async () => {
     setLoading(true);
     try {
-      const response = await api.get("/api/dashboard/sales/pending");
+      const response = await api.get<{ data: Loan[] }>("/api/dashboard/sales/pending");
       setLoans(response.data?.data || []);
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to load pending leads.");
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to load pending leads.";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchLeads();
+    (async () => {
+      await fetchLeads();
+    })();
   }, []);
 
   const handleVerify = async (loanId: string) => {
@@ -56,8 +58,9 @@ export default function SalesPanel() {
       });
       toast.success("Lead verified! Forwarded to Sanction panel.", { id: loadToast });
       fetchLeads();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to verify lead.", { id: loadToast });
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to verify lead.";
+      toast.error(msg, { id: loadToast });
     }
   };
 
@@ -78,12 +81,12 @@ export default function SalesPanel() {
       setRejectingLoanId(null);
       setRejectionReason("");
       fetchLeads();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to record rejection.", { id: loadToast });
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to record rejection.";
+      toast.error(msg, { id: loadToast });
     }
   };
 
-  // Filter leads based on name, email, or PAN
   const filteredLoans = loans.filter((loan) => {
     const name = loan.borrowerId?.fullName || "";
     const email = loan.borrowerId?.email || "";
@@ -98,7 +101,6 @@ export default function SalesPanel() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-100 flex items-center gap-3">
@@ -110,7 +112,6 @@ export default function SalesPanel() {
           </p>
         </div>
 
-        {/* Search */}
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-500" />
           <input
@@ -123,7 +124,6 @@ export default function SalesPanel() {
         </div>
       </div>
 
-      {/* Main Grid / Table */}
       {loading ? (
         <div className="flex h-64 items-center justify-center rounded-2xl border border-slate-900 bg-slate-900/10">
           <div className="flex flex-col items-center gap-3">
@@ -159,7 +159,6 @@ export default function SalesPanel() {
               <tbody className="divide-y divide-slate-900/50 text-slate-300">
                 {filteredLoans.map((loan) => (
                   <tr key={loan._id} className="hover:bg-slate-900/20 transition-colors">
-                    {/* User */}
                     <td className="px-6 py-4">
                       <div className="font-semibold text-slate-200">
                         {loan.borrowerId?.fullName || "Unregistered Lead"}
@@ -169,41 +168,34 @@ export default function SalesPanel() {
                       </div>
                     </td>
 
-                    {/* PAN */}
                     <td className="px-6 py-4 font-mono text-slate-400 uppercase tracking-wider">
                       {loan.pan}
                     </td>
 
-                    {/* Salary */}
                     <td className="px-6 py-4 text-right font-semibold text-slate-300">
-                      {formatINR(loan.monthlySalary)}
+                      {loan.monthlySalary ? formatINR(loan.monthlySalary) : "—"}
                       <span className="block text-[9px] text-indigo-400 font-normal">
                         {loan.employmentMode}
                       </span>
                     </td>
 
-                    {/* Request Amount */}
                     <td className="px-6 py-4 text-right font-bold text-emerald-400">
                       {formatINR(loan.loanAmount)}
                     </td>
 
-                    {/* Tenure */}
                     <td className="px-6 py-4 text-center font-semibold text-slate-400">
                       {loan.tenure} days
                     </td>
 
-                    {/* Submission Date */}
                     <td className="px-6 py-4 text-slate-500">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="h-3.5 w-3.5" />
-                        {formatDate(loan.createdAt)}
+                        {loan.createdAt ? formatDate(loan.createdAt) : "—"}
                       </div>
                     </td>
 
-                    {/* Actions */}
                     <td className="px-6 py-4 text-center">
                       <div className="flex items-center justify-center gap-2">
-                        {/* Verify */}
                         <button
                           onClick={() => handleVerify(loan._id)}
                           className="flex items-center gap-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 py-1.5 px-2.5 font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-all active:scale-95"
@@ -213,7 +205,6 @@ export default function SalesPanel() {
                           Verify
                         </button>
 
-                        {/* Reject */}
                         <button
                           onClick={() => setRejectingLoanId(loan._id)}
                           className="flex items-center gap-1 rounded-lg bg-rose-500/10 border border-rose-500/20 py-1.5 px-2.5 font-semibold text-rose-400 hover:bg-rose-500/20 transition-all active:scale-95"
@@ -232,7 +223,6 @@ export default function SalesPanel() {
         </div>
       )}
 
-      {/* Rejection Modal Dialog */}
       {rejectingLoanId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-4">

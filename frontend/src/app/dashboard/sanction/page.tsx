@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { api } from "@/services/api";
-import { ShieldAlert, CheckCircle, Ban, Eye, X, Calendar, FileText, ExternalLink, Calculator } from "lucide-react";
+import { ShieldAlert, CheckCircle, Ban, Eye, X, Calendar, FileText, ExternalLink } from "lucide-react";
 import toast from "react-hot-toast";
 
-// Currency Formatter
 const formatINR = (num: number) => {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -14,7 +13,6 @@ const formatINR = (num: number) => {
   }).format(num);
 };
 
-// Date Formatter
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString("en-IN", {
     year: "numeric",
@@ -23,7 +21,6 @@ const formatDate = (dateString: string) => {
   });
 };
 
-// Age Calculator
 const getAge = (dobString: string): number => {
   if (!dobString) return 0;
   const today = new Date();
@@ -36,14 +33,33 @@ const getAge = (dobString: string): number => {
   return age;
 };
 
+interface Borrower {
+  fullName?: string;
+  email?: string;
+}
+
+interface Loan {
+  _id: string;
+  borrowerId?: Borrower;
+  loanAmount: number;
+  totalRepayment: number;
+  tenure: number;
+  dob?: string;
+  updatedAt: string;
+
+  pan?: string;
+  monthlySalary?: number;
+  employmentMode?: string;
+  interestRate?: number;
+  salarySlipUrl?: string;
+}
+
 export default function SanctionPanel() {
-  const [loans, setLoans] = useState<any[]>([]);
+  const [loans, setLoans] = useState<Loan[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Modal Detail state
-  const [selectedLoan, setSelectedLoan] = useState<any | null>(null);
+  const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
 
-  // Reject input state
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
@@ -51,17 +67,20 @@ export default function SanctionPanel() {
   const fetchVerifiedLoans = async () => {
     setLoading(true);
     try {
-      const response = await api.get("/api/dashboard/sanction/verified");
+      const response = await api.get<{ data: Loan[] }>("/api/dashboard/sanction/verified");
       setLoans(response.data?.data || []);
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to load verified loans.");
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to load verified loans.";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchVerifiedLoans();
+    (async () => {
+      await fetchVerifiedLoans();
+    })();
   }, []);
 
   const handleApprove = async (loanId: string) => {
@@ -74,8 +93,9 @@ export default function SanctionPanel() {
       toast.success("Loan sanctioned successfully! Forwarded to Disbursement.", { id: loadToast });
       setSelectedLoan(null);
       fetchVerifiedLoans();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to sanction loan.", { id: loadToast });
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to sanction loan.";
+      toast.error(msg, { id: loadToast });
     } finally {
       setActionLoading(false);
     }
@@ -100,8 +120,9 @@ export default function SanctionPanel() {
       setShowRejectForm(false);
       setRejectionReason("");
       fetchVerifiedLoans();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to reject loan.", { id: loadToast });
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to reject loan.";
+      toast.error(msg, { id: loadToast });
     } finally {
       setActionLoading(false);
     }
@@ -109,7 +130,6 @@ export default function SanctionPanel() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight text-slate-100 flex items-center gap-3">
           <ShieldAlert className="h-6 w-6 text-indigo-400" />
@@ -120,7 +140,6 @@ export default function SanctionPanel() {
         </p>
       </div>
 
-      {/* Main Grid / Table */}
       {loading ? (
         <div className="flex h-64 items-center justify-center rounded-2xl border border-slate-900 bg-slate-900/10">
           <div className="flex flex-col items-center gap-3">
@@ -155,7 +174,6 @@ export default function SanctionPanel() {
               <tbody className="divide-y divide-slate-900/50 text-slate-300">
                 {loans.map((loan) => (
                   <tr key={loan._id} className="hover:bg-slate-900/20 transition-colors">
-                    {/* User */}
                     <td className="px-6 py-4">
                       <div className="font-semibold text-slate-200">
                         {loan.borrowerId?.fullName || "Verified Applicant"}
@@ -165,30 +183,25 @@ export default function SanctionPanel() {
                       </div>
                     </td>
 
-                    {/* Amount */}
                     <td className="px-6 py-4 text-right font-bold text-slate-100">
                       {formatINR(loan.loanAmount)}
                     </td>
 
-                    {/* Tenure */}
                     <td className="px-6 py-4 text-center font-semibold text-slate-400">
                       {loan.tenure} days
                     </td>
 
-                    {/* Total Repayment */}
                     <td className="px-6 py-4 text-right font-bold text-emerald-400">
                       {formatINR(loan.totalRepayment)}
                     </td>
 
-                    {/* Updated date (Verification Date) */}
                     <td className="px-6 py-4 text-slate-500">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="h-3.5 w-3.5" />
-                        {formatDate(loan.updatedAt)}
+                        {loan.updatedAt ? formatDate(loan.updatedAt) : "—"}
                       </div>
                     </td>
 
-                    {/* Inspect button */}
                     <td className="px-6 py-4 text-center">
                       <button
                         onClick={() => {
@@ -210,11 +223,9 @@ export default function SanctionPanel() {
         </div>
       )}
 
-      {/* Credit Assessment Details Modal */}
       {selectedLoan && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm overflow-y-auto">
           <div className="w-full max-w-2xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden my-8">
-            {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-850 p-6">
               <div>
                 <span className="text-xs font-semibold text-indigo-400 uppercase tracking-widest">
@@ -232,10 +243,8 @@ export default function SanctionPanel() {
               </button>
             </div>
 
-            {/* Modal Content */}
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Applicant Bio */}
                 <div className="space-y-4">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-850 pb-2">
                     Applicant Information
@@ -252,7 +261,7 @@ export default function SanctionPanel() {
                     <div className="flex justify-between">
                       <span className="text-slate-500">Age:</span>
                       <span className="text-slate-200 font-semibold">
-                        {getAge(selectedLoan.dob)} Years ({formatDate(selectedLoan.dob)})
+                        {getAge(selectedLoan.dob ?? "")} Years ({selectedLoan.dob ? formatDate(selectedLoan.dob) : "—"})
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -261,7 +270,7 @@ export default function SanctionPanel() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-500">Monthly salary:</span>
-                      <span className="text-slate-200 font-semibold">{formatINR(selectedLoan.monthlySalary)}</span>
+                      <span className="text-slate-200 font-semibold">{selectedLoan.monthlySalary ? formatINR(selectedLoan.monthlySalary) : "—"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-500">Employment Mode:</span>
@@ -270,7 +279,6 @@ export default function SanctionPanel() {
                   </div>
                 </div>
 
-                {/* Loan math */}
                 <div className="space-y-4">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-850 pb-2">
                     Loan Configuration Math
@@ -302,7 +310,6 @@ export default function SanctionPanel() {
                 </div>
               </div>
 
-              {/* Document Slip File view */}
               <div className="space-y-3">
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-850 pb-2">
                   Uploaded Verification Docs
@@ -333,7 +340,6 @@ export default function SanctionPanel() {
                 </div>
               </div>
 
-              {/* Rejection input inline block */}
               {showRejectForm && (
                 <form onSubmit={handleReject} className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-4 space-y-3">
                   <div className="flex justify-between items-center">
@@ -367,7 +373,6 @@ export default function SanctionPanel() {
               )}
             </div>
 
-            {/* Modal Actions Footer */}
             {!showRejectForm && (
               <div className="flex items-center justify-between border-t border-slate-850 p-6 bg-slate-900/30">
                 <button
@@ -393,7 +398,7 @@ export default function SanctionPanel() {
                     type="button"
                     onClick={() => handleApprove(selectedLoan._id)}
                     disabled={actionLoading}
-                    className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-emerald-500/20 hover:brightness-110 active:scale-98 disabled:opacity-50"
+                    className="flex items-center gap-1.5 rounded-xl bg-linear-to-r from-emerald-500 to-teal-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-emerald-500/20 hover:brightness-110 active:scale-98 disabled:opacity-50"
                   >
                     <CheckCircle className="h-4 w-4" />
                     Issue Sanction

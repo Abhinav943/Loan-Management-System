@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { api } from "@/services/api";
-import { CreditCard, Calendar, CheckCircle, Search, DollarSign, PlusCircle, History, ArrowRight, ShieldCheck, X, FileCheck } from "lucide-react";
+import { CreditCard, Search, PlusCircle, History, ArrowRight, X, FileCheck } from "lucide-react";
 import toast from "react-hot-toast";
+import axios from "axios";
+import type { Loan, Payment, CelebrationInfo } from "@/types";
 
-// Currency Formatter
 const formatINR = (num: number) => {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -14,7 +15,6 @@ const formatINR = (num: number) => {
   }).format(num);
 };
 
-// Date Formatter
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString("en-IN", {
     year: "numeric",
@@ -24,37 +24,36 @@ const formatDate = (dateString: string) => {
 };
 
 export default function CollectionPanel() {
-  const [loans, setLoans] = useState<any[]>([]);
+  const [loans, setLoans] = useState<Loan[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  // Payment recording states
-  const [recordingLoan, setRecordingLoan] = useState<any | null>(null);
+  const [recordingLoan, setRecordingLoan] = useState<Loan | null>(null);
   const [utrNumber, setUtrNumber] = useState("");
   const [paymentAmount, setPaymentAmount] = useState<number | "">("");
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().substring(0, 10));
   const [actionLoading, setActionLoading] = useState(false);
 
-  // History inspection states
-  const [historyLoan, setHistoryLoan] = useState<any | null>(null);
+  const [historyLoan, setHistoryLoan] = useState<Loan | null>(null);
 
-  // Closed loan celebration screen
-  const [celebratingLoan, setCelebratingLoan] = useState<any | null>(null);
+  const [celebratingLoan, setCelebratingLoan] = useState<CelebrationInfo | null>(null);
 
   const fetchDisbursedLoans = async () => {
-    setLoading(true);
     try {
-      const response = await api.get("/api/dashboard/collection/disbursed");
+      const response = await api.get<{ data: Loan[] }>("/api/dashboard/collection/disbursed");
       setLoans(response.data?.data || []);
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to load active credit lines.");
+    } catch (err: unknown) {
+      const message = axios.isAxiosError(err) ? err.response?.data?.message : null;
+      toast.error(message || "Failed to load active credit lines.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDisbursedLoans();
+    (async () => {
+      await fetchDisbursedLoans();
+    })();
   }, []);
 
   const handleRecordPayment = async (e: React.FormEvent) => {
@@ -63,8 +62,6 @@ export default function CollectionPanel() {
       toast.error("Please fill in all required payment details.");
       return;
     }
-
-    // UTR Uniqueness validation on client
     const uppercaseUtr = utrNumber.trim().toUpperCase();
     const allUtrs = loans.flatMap((l) => l.payments || []).map((p) => p.utrNumber.toUpperCase());
     if (allUtrs.includes(uppercaseUtr)) {
@@ -81,13 +78,11 @@ export default function CollectionPanel() {
         paymentDate: paymentDate
       });
 
-      const result = response.data?.data;
+      const result = response.data?.data as { loanStatus?: string } | undefined;
       
-      // Check if loan was closed as a result
       const totalPaidSoFar = (recordingLoan.totalPaid || 0) + Number(paymentAmount);
       
       if (totalPaidSoFar >= recordingLoan.totalRepayment || result?.loanStatus === "Closed") {
-        // Trigger loan closed celebration
         setCelebratingLoan({
           borrowerName: recordingLoan.borrowerId?.fullName || "Borrower",
           amount: recordingLoan.totalRepayment
@@ -97,14 +92,15 @@ export default function CollectionPanel() {
         toast.success("Payment recorded successfully!", { id: loadToast });
         setRecordingLoan(null);
       }
-      
-      // Clear form inputs
+
       setUtrNumber("");
       setPaymentAmount("");
       setPaymentDate(new Date().toISOString().substring(0, 10));
+      setLoading(true);
       fetchDisbursedLoans();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to record payment.", { id: loadToast });
+    } catch (err: unknown) {
+      const message = axios.isAxiosError(err) ? err.response?.data?.message : null;
+      toast.error(message || "Failed to record payment.", { id: loadToast });
     } finally {
       setActionLoading(false);
     }
@@ -124,7 +120,7 @@ export default function CollectionPanel() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-100 flex items-center gap-3">
@@ -136,7 +132,7 @@ export default function CollectionPanel() {
           </p>
         </div>
 
-        {/* Search */}
+
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-500" />
           <input
@@ -149,7 +145,6 @@ export default function CollectionPanel() {
         </div>
       </div>
 
-      {/* Main Grid / Table */}
       {loading ? (
         <div className="flex h-64 items-center justify-center rounded-2xl border border-slate-900 bg-slate-900/10">
           <div className="flex flex-col items-center gap-3">
@@ -181,7 +176,7 @@ export default function CollectionPanel() {
                 className="rounded-2xl border border-slate-900 bg-slate-900/15 p-6 space-y-4 hover:border-slate-800 transition-all flex flex-col justify-between shadow-md"
               >
                 <div>
-                  {/* Borrower details header */}
+
                   <div className="flex justify-between items-start border-b border-slate-900/60 pb-3">
                     <div>
                       <h3 className="text-sm font-bold text-slate-200">
@@ -194,7 +189,7 @@ export default function CollectionPanel() {
                     </span>
                   </div>
 
-                  {/* Financial Stats */}
+
                   <div className="grid grid-cols-3 gap-2 py-4 text-xs">
                     <div>
                       <span className="text-slate-500 block text-[10px]">Total Repayment</span>
@@ -210,7 +205,7 @@ export default function CollectionPanel() {
                     </div>
                   </div>
 
-                  {/* Repayment Progress bar */}
+
                   <div className="space-y-1">
                     <div className="flex justify-between text-[10px] text-slate-500 font-semibold">
                       <span>Repayment progress</span>
@@ -218,14 +213,13 @@ export default function CollectionPanel() {
                     </div>
                     <div className="h-2 w-full bg-slate-900 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 transition-all duration-500"
+                        className="h-full bg-linear-to-r from-indigo-500 to-emerald-500 transition-all duration-500"
                         style={{ width: `${progress}%` }}
                       ></div>
                     </div>
                   </div>
                 </div>
 
-                {/* Actions footer */}
                 <div className="flex gap-2 pt-4 border-t border-slate-900/40 mt-4">
                   <button
                     onClick={() => setHistoryLoan(loan)}
@@ -239,7 +233,7 @@ export default function CollectionPanel() {
                     onClick={() => {
                       setRecordingLoan(loan);
                       setUtrNumber("");
-                      setPaymentAmount(remaining); // Autofill remaining
+                      setPaymentAmount(remaining); 
                     }}
                     className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/25 py-2 px-3 text-xs font-semibold text-indigo-400 hover:bg-indigo-500/20 transition-all"
                   >
@@ -253,7 +247,6 @@ export default function CollectionPanel() {
         </div>
       )}
 
-      {/* Record Repayment Drawer/Modal */}
       {recordingLoan && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-4">
@@ -276,7 +269,6 @@ export default function CollectionPanel() {
             </div>
 
             <form onSubmit={handleRecordPayment} className="space-y-4 text-xs">
-              {/* Outstanding balance indicator */}
               <div className="rounded-lg bg-slate-950 p-3 border border-slate-850 flex justify-between items-center">
                 <span className="text-slate-500">Remaining Balance:</span>
                 <span className="text-indigo-400 font-bold font-mono">
@@ -284,7 +276,6 @@ export default function CollectionPanel() {
                 </span>
               </div>
 
-              {/* UTR Input */}
               <div className="space-y-1.5">
                 <label className="text-slate-400 font-semibold uppercase tracking-wider block">
                   Unique UTR Number (Must be unique)
@@ -299,7 +290,6 @@ export default function CollectionPanel() {
                 />
               </div>
 
-              {/* Amount Input */}
               <div className="space-y-1.5">
                 <label className="text-slate-400 font-semibold uppercase tracking-wider block">
                   Payment Amount (INR)
@@ -316,7 +306,6 @@ export default function CollectionPanel() {
                 />
               </div>
 
-              {/* Date Input */}
               <div className="space-y-1.5">
                 <label className="text-slate-400 font-semibold uppercase tracking-wider block">
                   Repayment Date
@@ -351,7 +340,6 @@ export default function CollectionPanel() {
         </div>
       )}
 
-      {/* Payment History Modal */}
       {historyLoan && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-4">
@@ -373,20 +361,22 @@ export default function CollectionPanel() {
               </button>
             </div>
 
-            {/* List */}
             <div className="max-h-60 overflow-y-auto space-y-2 text-xs">
               {!historyLoan.payments || historyLoan.payments.length === 0 ? (
                 <p className="text-center text-slate-500 py-6 italic">No payments have been recorded yet for this active balance.</p>
               ) : (
-                historyLoan.payments.map((p: any, idx: number) => (
-                  <div key={p._id || idx} className="rounded-lg bg-slate-950 p-3 border border-slate-850 flex justify-between items-center">
-                    <div>
-                      <p className="font-bold text-slate-300 font-mono uppercase">{p.utrNumber}</p>
-                      <p className="text-[10px] text-slate-500 mt-0.5">Recorded: {formatDate(p.paymentDate || p.createdAt)}</p>
+                historyLoan.payments.map((p: Payment, idx: number) => {
+                  const dateStr = p.paymentDate ?? p.createdAt;
+                  return (
+                    <div key={p._id || idx} className="rounded-lg bg-slate-950 p-3 border border-slate-850 flex justify-between items-center">
+                      <div>
+                        <p className="font-bold text-slate-300 font-mono uppercase">{p.utrNumber}</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5">Recorded: {dateStr ? formatDate(dateStr) : "—"}</p>
+                      </div>
+                      <span className="font-extrabold text-emerald-400">{formatINR(p.amount)}</span>
                     </div>
-                    <span className="font-extrabold text-emerald-400">{formatINR(p.amount)}</span>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 
@@ -403,11 +393,10 @@ export default function CollectionPanel() {
         </div>
       )}
 
-      {/* Closed Loan Settle Celebration Screen */}
       {celebratingLoan && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 p-4 backdrop-blur-md">
           <div className="w-full max-w-md rounded-2xl border border-emerald-500/20 bg-slate-900 p-8 text-center shadow-2xl shadow-emerald-950/30 space-y-6 relative overflow-hidden">
-            {/* Glow */}
+
             <div className="absolute -top-24 -left-24 h-48 w-48 rounded-full bg-emerald-500/10 blur-3xl"></div>
             
             <div className="relative space-y-4">
@@ -426,7 +415,7 @@ export default function CollectionPanel() {
 
               <button
                 onClick={() => setCelebratingLoan(null)}
-                className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 py-3 px-4 text-xs font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:brightness-110"
+                className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-linear-to-r from-emerald-500 to-teal-600 py-3 px-4 text-xs font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:brightness-110"
               >
                 Return to Repayment List
                 <ArrowRight className="h-4 w-4" />

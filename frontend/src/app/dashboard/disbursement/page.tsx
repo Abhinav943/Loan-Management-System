@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { api } from "@/services/api";
-import { Coins, CheckCircle, Calendar, CreditCard, ArrowRight } from "lucide-react";
+import { Coins, CheckCircle, Calendar } from "lucide-react";
 import toast from "react-hot-toast";
+import type { Loan } from "@/types";
 
-// Currency Formatter
 const formatINR = (num: number) => {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -14,7 +14,6 @@ const formatINR = (num: number) => {
   }).format(num);
 };
 
-// Date Formatter
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString("en-IN", {
     year: "numeric",
@@ -24,23 +23,26 @@ const formatDate = (dateString: string) => {
 };
 
 export default function DisbursementPanel() {
-  const [loans, setLoans] = useState<any[]>([]);
+  const [loans, setLoans] = useState<Loan[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchSanctionedLoans = async () => {
     setLoading(true);
     try {
-      const response = await api.get("/api/dashboard/disbursement/sanctioned");
+      const response = await api.get<{ data: Loan[] }>("/api/dashboard/disbursement/sanctioned");
       setLoans(response.data?.data || []);
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to load sanctioned loans.");
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to load sanctioned loans.";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSanctionedLoans();
+    (async () => {
+      await fetchSanctionedLoans();
+    })();
   }, []);
 
   const handleDisburse = async (loanId: string) => {
@@ -49,14 +51,14 @@ export default function DisbursementPanel() {
       await api.put(`/api/dashboard/disbursement/disburse/${loanId}`);
       toast.success("Capital Disbursed! Funds released to borrower bank account.", { id: loadToast });
       fetchSanctionedLoans();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to disburse loan.", { id: loadToast });
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to disburse loan.";
+      toast.error(msg, { id: loadToast });
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight text-slate-100 flex items-center gap-3">
           <Coins className="h-6 w-6 text-indigo-400" />
@@ -67,7 +69,6 @@ export default function DisbursementPanel() {
         </p>
       </div>
 
-      {/* Main Grid / Table */}
       {loading ? (
         <div className="flex h-64 items-center justify-center rounded-2xl border border-slate-900 bg-slate-900/10">
           <div className="flex flex-col items-center gap-3">
@@ -112,34 +113,29 @@ export default function DisbursementPanel() {
                       </div>
                     </td>
 
-                    {/* Amount */}
                     <td className="px-6 py-4 text-right font-bold text-slate-100">
                       {formatINR(loan.loanAmount)}
                     </td>
 
-                    {/* Tenure */}
                     <td className="px-6 py-4 text-center font-semibold text-slate-400">
                       {loan.tenure} days
                     </td>
 
-                    {/* Total Repayment */}
                     <td className="px-6 py-4 text-right font-bold text-emerald-400">
                       {formatINR(loan.totalRepayment)}
                     </td>
 
-                    {/* Updated date (Sanction Date) */}
                     <td className="px-6 py-4 text-slate-500">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="h-3.5 w-3.5" />
-                        {formatDate(loan.updatedAt)}
+                        {loan.updatedAt ?? loan.createdAt ? formatDate(loan.updatedAt ?? loan.createdAt ?? "") : "—"}
                       </div>
                     </td>
 
-                    {/* Disburse Button */}
                     <td className="px-6 py-4 text-center">
                       <button
                         onClick={() => handleDisburse(loan._id)}
-                        className="flex items-center gap-1.5 mx-auto rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:brightness-110 py-1.5 px-3 font-semibold text-white shadow-md shadow-emerald-500/10 transition-all active:scale-95"
+                        className="flex items-center gap-1.5 mx-auto rounded-lg bg-linear-to-r from-emerald-500 to-emerald-600 hover:brightness-110 py-1.5 px-3 font-semibold text-white shadow-md shadow-emerald-500/10 transition-all active:scale-95"
                       >
                         <CheckCircle className="h-3.5 w-3.5" />
                         Release Capital
