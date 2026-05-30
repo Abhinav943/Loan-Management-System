@@ -21,6 +21,11 @@ const formatDate = (dateString: string) => {
   });
 };
 
+const getSafeDownloadUrl = (originalUrl: string) => {
+  if (!originalUrl) return "#";
+  return originalUrl.replace("/upload/", "/upload/fl_attachment/");
+};
+
 const getAge = (dobString: string): number => {
   if (!dobString) return 0;
   const today = new Date();
@@ -328,15 +333,15 @@ export default function SanctionPanel() {
                       </p>
                     </div>
                   </div>
-                  <a
-                    href={selectedLoan.salarySlipUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1.5 rounded-lg border border-slate-850 bg-slate-900 py-1.5 px-3 text-xs font-semibold text-slate-300 hover:text-slate-100 hover:bg-slate-800"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    View File
-                  </a>
+                <a
+    href={getSafeDownloadUrl(selectedLoan.salarySlipUrl || "")} 
+    target="_blank"
+    rel="noreferrer"
+    className="flex items-center gap-1.5 rounded-lg border border-slate-850 bg-slate-900 py-1.5 px-3 text-xs font-semibold text-slate-300 hover:text-slate-100 hover:bg-slate-800"
+  >
+    <ExternalLink className="h-3.5 w-3.5" />
+    View File
+  </a>
                 </div>
               </div>
 
