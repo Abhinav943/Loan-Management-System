@@ -4,6 +4,7 @@ import asyncHandler from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
 import { ApiResponse } from "../utils/ApiResponse";
 import { AuthRequest } from "../middlewares/authMiddleware";
+import { uploadOnCloudinary } from "../utils/cloudinary";
 
 const calculateAge = (dob: string | Date): number => {
   const diffMs = Date.now() - new Date(dob).getTime();
@@ -18,7 +19,6 @@ export const applyForLoan = asyncHandler(
       dob,
       monthlySalary,
       employmentMode,
-      salarySlipUrl,
       loanAmount,
       tenure,
     } = req.body;
@@ -28,12 +28,25 @@ export const applyForLoan = asyncHandler(
       !dob ||
       !monthlySalary ||
       !employmentMode ||
-      !salarySlipUrl ||
       !loanAmount ||
       !tenure
     ) {
       throw new ApiError(400, "All application fields are required");
     }
+
+    const salarySlipLocalPath = req.file?.path;
+
+    if (!salarySlipLocalPath) {
+      throw new ApiError(400, "Salary slip file is required");
+    }
+
+    const cloudinaryResponse = await uploadOnCloudinary(salarySlipLocalPath);
+
+    if (!cloudinaryResponse || !cloudinaryResponse.secure_url) {
+      throw new ApiError(500, "Failed to upload salary slip to cloud storage");
+    }
+
+    const salarySlipUrl = cloudinaryResponse.secure_url;
 
     const breErrors: string[] = [];
 
