@@ -41,6 +41,14 @@ The app is built as a Next.js frontend with an Express + MongoDB backend. It use
 
 ---
 
+## 🎥 Video Demonstration
+
+Watch the complete end-to-end flow of the Loan Management System—including borrower application, BRE validation, role-based dashboards, and auto-close logic—here:
+
+[**View the Demo on Google Drive**](https://drive.google.com/file/d/1LfQ67hlUBqMp9q30-AAfSrsbVW69alpq/view?usp=sharing)
+
+---
+
 ## 📁 Repository Structure
 
 ```text
